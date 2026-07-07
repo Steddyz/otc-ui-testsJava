@@ -35,26 +35,26 @@ public class OtcSearchTest {
         Configuration.timeout = 15000;
         Configuration.browserSize = "1920x1080";
 
-        System.out.println("🚀 Запуск теста для сайта: " + siteUrl);
+        System.out.println("Запуск теста для сайта: " + siteUrl);
     }
 
     @Test
     public void searchProductsTest() throws IOException {
         open(siteUrl);
-        System.out.println("✅ Сайт открыт");
+        System.out.println("Сайт открыт");
         sleep(3000);
 
         if ($("a[href*='marketplace-b2b']").exists()) {
             $("a[href*='marketplace-b2b']").click();
-            System.out.println("✅ Нажата ссылка 'Поиск товаров'");
+            System.out.println("Нажата ссылка 'Поиск товаров'");
             sleep(3000);
         } else {
-            System.out.println("⚠️ Ссылка 'Поиск товаров' не найдена");
+            System.out.println("Ссылка 'Поиск товаров' не найдена");
         }
 
         List<String> products = new ArrayList<>();
 
-        System.out.println("📄 Сбор данных со страницы...");
+        System.out.println("Сбор данных со страницы...");
         String pageText = $("body").getText();
         String[] lines = pageText.split("\n");
 
@@ -65,7 +65,7 @@ public class OtcSearchTest {
             }
         }
 
-        System.out.println("✅ Собрано строк: " + products.size());
+        System.out.println("Собрано строк: " + products.size());
 
         if (products.isEmpty()) {
             products.add("Страница не содержит данных");
@@ -78,7 +78,7 @@ public class OtcSearchTest {
         }
         writer.close();
 
-        System.out.println("✅ Данные сохранены в products.txt");
+        System.out.println("Данные сохранены в products.txt");
 
         File file = new File("products.txt");
         assert file.exists() : "❌ Файл не создан!";
