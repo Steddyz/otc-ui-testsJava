@@ -1,89 +1,91 @@
 package com.example;
 
 import com.codeborne.selenide.Configuration;
+import com.codeborne.selenide.WebDriverRunner;
+import com.example.pages.MainPage;
+import com.example.pages.MarketplaceSearchPage;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Timeout;
 
-import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileWriter;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Properties;
+import java.util.concurrent.TimeUnit;
 
-import static com.codeborne.selenide.Condition.*;
-import static com.codeborne.selenide.Selenide.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 public class OtcSearchTest {
 
-    private static String searchQuery;
     private static String siteUrl;
+    private static String searchQuery;
+    private static String searchCity;
 
     @BeforeAll
     public static void setup() throws IOException {
         Properties props = new Properties();
-        FileInputStream fis = new FileInputStream("src/test/resources/config.properties");
-        props.load(fis);
-        fis.close();
+        try (FileInputStream fis = new FileInputStream("src/test/resources/config.properties")) {
+            props.load(fis);
+        }
 
-        searchQuery = props.getProperty("search.query");
         siteUrl = props.getProperty("site.url");
+        searchQuery = props.getProperty("search.query");
+        searchCity = props.getProperty("search.city");
 
         Configuration.browser = "edge";
         Configuration.headless = false;
-        Configuration.timeout = 15000;
+        Configuration.timeout = 30000;
         Configuration.browserSize = "1920x1080";
 
-        System.out.println("Запуск теста для сайта: " + siteUrl);
+        System.setProperty("selenide.timeout", "30000");
     }
 
     @Test
-    public void searchProductsTest() throws IOException {
-        open(siteUrl);
-        System.out.println("Сайт открыт");
-        sleep(3000);
+    @Timeout(value = 120, unit = TimeUnit.SECONDS)
+    public void siteLoadTest() {
+        MainPage mainPage = new MainPage();
+        mainPage.open(siteUrl);
 
-        if ($("a[href*='marketplace-b2b']").exists()) {
-            $("a[href*='marketplace-b2b']").click();
-            System.out.println("Нажата ссылка 'Поиск товаров'");
-            sleep(3000);
-        } else {
-            System.out.println("Ссылка 'Поиск товаров' не найдена");
-        }
+        String pageTitle = WebDriverRunner.getWebDriver().getTitle();
+        assertNotNull(pageTitle, "Заголовок страницы отсутствует!");
+        assertFalse(pageTitle.isEmpty(), "Заголовок страницы пустой!");
+        System.out.println("Заголовок страницы: " + pageTitle);
 
-        List<String> products = new ArrayList<>();
+        String currentUrl = WebDriverRunner.getWebDriver().getCurrentUrl();
+        assertNotNull(currentUrl, "URL отсутствует!");
+        assertTrue(currentUrl.contains("market.otc.ru"), "Неправильный URL!");
+        System.out.println("Текущий URL: " + currentUrl);
+    }
 
-        System.out.println("Сбор данных со страницы...");
-        String pageText = $("body").getText();
-        String[] lines = pageText.split("\n");
+    @Test
+    @Timeout(value = 120, unit = TimeUnit.SECONDS)
+    public void mainPageElementsTest() {
+        MainPage mainPage = new MainPage();
+        mainPage.open(siteUrl);
 
-        for (String line : lines) {
-            line = line.trim();
-            if (!line.isEmpty() && line.length() > 10) {
-                products.add(line);
-            }
-        }
+        assertTrue(mainPage.hasSearchGoodsLink(), "Ссылка 'Поиск товаров' не найдена!");
+        System.out.println("Ссылка 'Поиск товаров' найдена");
 
-        System.out.println("Собрано строк: " + products.size());
+        assertTrue(mainPage.hasLoginButton(), "Кнопка 'Вход' не найдена!");
+        System.out.println("Кнопка 'Вход' найдена");
 
-        if (products.isEmpty()) {
-            products.add("Страница не содержит данных");
-        }
+        assertTrue(mainPage.hasRegisterButton(), "Кнопка 'Регистрация' не найдена!");
+        System.out.println("Кнопка 'Регистрация' найдена");
+    }
 
-        FileWriter writer = new FileWriter("products.txt");
-        writer.write("=== СОДЕРЖИМОЕ СТРАНИЦЫ ===\n\n");
-        for (String product : products) {
-            writer.write(product + "\n");
-        }
-        writer.close();
+    @Test
+    @Timeout(value = 120, unit = TimeUnit.SECONDS)
+    public void searchProductTest() throws IOException {
+        MainPage mainPage = new MainPage();
+        mainPage.open(siteUrl);
 
-        System.out.println("Данные сохранены в products.txt");
+        MarketplaceSearchPage searchPage = mainPage.goToMarketplaceB2b();
 
-        File file = new File("products.txt");
-        assert file.exists() : "❌ Файл не создан!";
-        assert file.length() > 0 : "❌ Файл пустой!";
+        searchPage.openSearchResults(searchQuery);
 
-        System.out.println("✅ Тест успешно завершен!");
+        searchPage.saveProductsToFile("storProducts.txt");
+
+        System.out.println("Тест успешно завершен!");
+        System.out.println("Файл сохранен как: storProducts.txt");
     }
 }
