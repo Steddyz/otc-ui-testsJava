@@ -20,6 +20,7 @@ public class OtcSearchTest {
     private static String siteUrl;
     private static String searchQuery;
     private static String searchCity;
+    private static String searchUrl;
 
     @BeforeAll
     public static void setup() throws IOException {
@@ -31,6 +32,7 @@ public class OtcSearchTest {
         siteUrl = props.getProperty("site.url");
         searchQuery = props.getProperty("search.query");
         searchCity = props.getProperty("search.city");
+        searchUrl = props.getProperty("search.url"); // Загружаем search.url
 
         Configuration.browser = "edge";
         Configuration.headless = false;
@@ -76,13 +78,9 @@ public class OtcSearchTest {
     @Test
     @Timeout(value = 120, unit = TimeUnit.SECONDS)
     public void searchProductTest() throws IOException {
-        MainPage mainPage = new MainPage();
-        mainPage.open(siteUrl);
-
-        MarketplaceSearchPage searchPage = mainPage.goToMarketplaceB2b();
-
-        searchPage.openSearchResults(searchQuery);
-
+        // Используем searchUrl вместо создания MainPage и перехода по ссылке
+        MarketplaceSearchPage searchPage = new MarketplaceSearchPage();
+        searchPage.openSearchResults(searchUrl); // Передаём готовую ссылку
         searchPage.saveProductsToFile("storProducts.txt");
 
         System.out.println("Тест успешно завершен!");
