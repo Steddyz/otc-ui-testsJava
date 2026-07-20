@@ -4,6 +4,7 @@ import com.codeborne.selenide.Configuration;
 import com.codeborne.selenide.WebDriverRunner;
 import com.example.pages.MainPage;
 import com.example.pages.MarketplaceSearchPage;
+import com.example.utils.TestLogger;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Timeout;
@@ -17,6 +18,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 public class OtcSearchTest {
 
+    private static final TestLogger log = new TestLogger();
     private static String siteUrl;
     private static String searchUrl;
 
@@ -47,12 +49,12 @@ public class OtcSearchTest {
         String pageTitle = WebDriverRunner.getWebDriver().getTitle();
         assertNotNull(pageTitle, "Заголовок страницы отсутствует!");
         assertFalse(pageTitle.isEmpty(), "Заголовок страницы пустой!");
-        System.out.println("Заголовок страницы: " + pageTitle);
+        log.info("Заголовок страницы: {}", pageTitle);
 
         String currentUrl = WebDriverRunner.getWebDriver().getCurrentUrl();
         assertNotNull(currentUrl, "URL отсутствует!");
         assertTrue(currentUrl.contains("market.otc.ru"), "Неправильный URL!");
-        System.out.println("Текущий URL: " + currentUrl);
+        log.info("Текущий URL: {}", currentUrl);
     }
 
     @Test
@@ -62,13 +64,13 @@ public class OtcSearchTest {
         mainPage.open(siteUrl);
 
         assertTrue(mainPage.hasSearchGoodsLink(), "Ссылка 'Поиск товаров' не найдена!");
-        System.out.println("Ссылка 'Поиск товаров' найдена");
+        log.info("Ссылка 'Поиск товаров' найдена");
 
         assertTrue(mainPage.hasLoginButton(), "Кнопка 'Вход' не найдена!");
-        System.out.println("Кнопка 'Вход' найдена");
+        log.info("Кнопка 'Вход' найдена");
 
         assertTrue(mainPage.hasRegisterButton(), "Кнопка 'Регистрация' не найдена!");
-        System.out.println("Кнопка 'Регистрация' найдена");
+        log.info("Кнопка 'Регистрация' найдена");
     }
 
     @Test
@@ -78,7 +80,7 @@ public class OtcSearchTest {
         searchPage.openSearchResults(searchUrl);
         searchPage.saveProductsToFile("storProducts.txt");
 
-        System.out.println("Тест успешно завершен!");
-        System.out.println("Файл сохранен как: storProducts.txt");
+        log.info("Тест успешно завершен!");
+        log.info("Файл сохранен как: storProducts.txt");
     }
 }

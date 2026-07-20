@@ -3,11 +3,14 @@ package com.example.pages;
 import com.codeborne.selenide.Selenide;
 import com.codeborne.selenide.SelenideElement;
 import com.codeborne.selenide.WebDriverRunner;
+import com.example.utils.TestLogger;
 
 import static com.codeborne.selenide.Condition.*;
 import static com.codeborne.selenide.Selenide.$;
 
 public class MainPage {
+
+    private static final TestLogger log = new TestLogger();
 
     private final SelenideElement logo = $(".page-logo");
     private final SelenideElement searchGoodsLink = $("a[href*='marketplace-b2b']");
@@ -17,7 +20,7 @@ public class MainPage {
     public MainPage open(String url) {
         Selenide.open(url);
         logo.shouldBe(visible);
-        System.out.println("Главная страница открыта: " + url);
+        log.info("Главная страница открыта: {}", url);
         return this;
     }
 
@@ -25,13 +28,13 @@ public class MainPage {
         searchGoodsLink.shouldBe(visible, enabled);
 
         String href = searchGoodsLink.getAttribute("href");
-        System.out.println("Ссылка 'Поиск товаров': " + href);
+        log.info("Ссылка 'Поиск товаров': {}", href);
 
         searchGoodsLink.click();
 
         switchToNewTab();
 
-        System.out.println("Переход на marketplace-b2b выполнен");
+        log.info("Переход на marketplace-b2b выполнен");
         return new MarketplaceSearchPage();
     }
 
@@ -46,7 +49,7 @@ public class MainPage {
                 break;
             }
         }
-        System.out.println("Переключились на новую вкладку");
+        log.info("Переключились на новую вкладку");
     }
 
     public boolean hasSearchGoodsLink() {

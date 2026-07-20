@@ -4,6 +4,7 @@ import com.codeborne.selenide.ElementsCollection;
 import com.codeborne.selenide.Selenide;
 import com.codeborne.selenide.WebDriverRunner;
 import com.example.dto.ProductDto;
+import com.example.utils.TestLogger;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -18,8 +19,10 @@ import static com.codeborne.selenide.Selenide.$$;
 
 public class MarketplaceSearchPage {
 
+    private static final TestLogger log = new TestLogger();
+
     public void openSearchResults(String url) {
-        System.out.println("Открываем: " + url);
+        log.info("Открываем: {}", url);
         Selenide.open(url);
 
         $("body").shouldBe(visible);
@@ -28,10 +31,10 @@ public class MarketplaceSearchPage {
             Thread.sleep(5000);
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
-            System.out.println("Ожидание было прервано: " + e.getMessage());
+            log.warn("Ожидание было прервано: {}", e.getMessage());
         }
 
-        System.out.println("Страница загружена");
+        log.info("Страница загружена");
     }
 
     public List<ProductDto> getProducts() {
@@ -42,11 +45,11 @@ public class MarketplaceSearchPage {
                 Thread.sleep(3000);
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
-                System.out.println("Ожидание было прервано: " + e.getMessage());
+                log.warn("Ожидание было прервано: {}", e.getMessage());
             }
 
             ElementsCollection productCards = $$("div[class*='ProductCard-module']");
-            System.out.println("Найдено карточек: " + productCards.size());
+            log.info("Найдено карточек: {}", productCards.size());
 
             for (var card : productCards) {
                 String name = "";
@@ -130,14 +133,14 @@ public class MarketplaceSearchPage {
                     products.add(new ProductDto(name, price, city, saleType));
 
                 } catch (Exception e) {
-                    System.out.println("Ошибка при парсинге карточки: " + e.getMessage());
+                    log.warn("Ошибка при парсинге карточки: {}", e.getMessage());
                 }
             }
 
-            System.out.println("Обработано товаров: " + products.size());
+            log.info("Обработано товаров: {}", products.size());
 
         } catch (Exception e) {
-            System.out.println("Ошибка: " + e.getMessage());
+            log.error("Ошибка: {}", e.getMessage());
         }
 
         return products;
@@ -167,7 +170,7 @@ public class MarketplaceSearchPage {
         String content = String.join("\n", productsInfo);
         Files.writeString(Paths.get(filename), content, StandardCharsets.UTF_8);
 
-        System.out.println("Файл сохранен: " + filename);
-        System.out.println("Всего сохранено товаров: " + counter);
+        log.info("Файл сохранен: {}", filename);
+        log.info("Всего сохранено товаров: {}", counter);
     }
 }
