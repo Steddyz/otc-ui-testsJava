@@ -3,6 +3,7 @@ package com.example.pages;
 import com.codeborne.selenide.ElementsCollection;
 import com.codeborne.selenide.Selenide;
 import com.codeborne.selenide.WebDriverRunner;
+import com.example.dto.ProductDto;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -18,7 +19,7 @@ import static com.codeborne.selenide.Selenide.$$;
 public class MarketplaceSearchPage {
 
     public void openSearchResults(String url) {
-        System.out.println(" Открываем: " + url);
+        System.out.println("Открываем: " + url);
         Selenide.open(url);
 
         $("body").shouldBe(visible);
@@ -27,30 +28,25 @@ public class MarketplaceSearchPage {
             Thread.sleep(5000);
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
-            System.out.println(" Ожидание было прервано: " + e.getMessage());
+            System.out.println("Ожидание было прервано: " + e.getMessage());
         }
 
-        System.out.println(" Страница загружена");
+        System.out.println("Страница загружена");
     }
 
-    public void saveProductsToFile(String filename) throws IOException {
-        List<String> productsInfo = new ArrayList<>();
-        productsInfo.add("=== СПИСОК ТОВАРОВ (ПРИНТЕРЫ) ===");
-        productsInfo.add("Дата: " + java.time.LocalDateTime.now());
-        productsInfo.add("---");
+    public List<ProductDto> getProducts() {
+        List<ProductDto> products = new ArrayList<>();
 
         try {
             try {
                 Thread.sleep(3000);
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
-                System.out.println(" Ожидание было прервано: " + e.getMessage());
+                System.out.println("Ожидание было прервано: " + e.getMessage());
             }
 
             ElementsCollection productCards = $$("div[class*='ProductCard-module']");
-            System.out.println("🔍 Найдено карточек: " + productCards.size());
-
-            int productCounter = 0;
+            System.out.println("Найдено карточек: " + productCards.size());
 
             for (var card : productCards) {
                 String name = "";
@@ -131,34 +127,47 @@ public class MarketplaceSearchPage {
                         }
                     }
 
-                    productCounter++;
-
-                    productsInfo.add(productCounter + ". " + name);
-                    productsInfo.add("   Цена: " + price);
-                    productsInfo.add("   Город: " + city);
-                    productsInfo.add("   Тип продажи: " + saleType);
-                    productsInfo.add("");
+                    products.add(new ProductDto(name, price, city, saleType));
 
                 } catch (Exception e) {
-                    System.out.println(" Ошибка при парсинге карточки: " + e.getMessage());
+                    System.out.println("Ошибка при парсинге карточки: " + e.getMessage());
                 }
             }
 
-            System.out.println(" Обработано товаров: " + productCounter);
-
-            if (productsInfo.size() <= 3) {
-                productsInfo.add("Товары не найдены на странице");
-            }
-
-            String content = String.join("\n", productsInfo);
-            Files.writeString(Paths.get(filename), content, StandardCharsets.UTF_8);
-
-            System.out.println(" Файл сохранен: " + filename);
-            System.out.println(" Всего сохранено товаров: " + productCounter);
+            System.out.println("Обработано товаров: " + products.size());
 
         } catch (Exception e) {
-            System.out.println(" Ошибка: " + e.getMessage());
-            throw new IOException("Ошибка при сохранении данных", e);
+            System.out.println("Ошибка: " + e.getMessage());
         }
+
+        return products;
+    }
+
+    public void saveProductsToFile(String filename) throws IOException {
+        List<ProductDto> products = getProducts();
+        List<String> productsInfo = new ArrayList<>();
+        productsInfo.add("=== СПИСОК ТОВАРОВ (ПРИНТЕРЫ) ===");
+        productsInfo.add("Дата: " + java.time.LocalDateTime.now());
+        productsInfo.add("---");
+
+        int counter = 0;
+        for (ProductDto product : products) {
+            counter++;
+            productsInfo.add(counter + ". " + product.getName());
+            productsInfo.add("   Цена: " + product.getPrice());
+            productsInfo.add("   Город: " + product.getCity());
+            productsInfo.add("   Тип продажи: " + product.getSaleType());
+            productsInfo.add("");
+        }
+
+        if (products.isEmpty()) {
+            productsInfo.add("Товары не найдены на странице");
+        }
+
+        String content = String.join("\n", productsInfo);
+        Files.writeString(Paths.get(filename), content, StandardCharsets.UTF_8);
+
+        System.out.println("Файл сохранен: " + filename);
+        System.out.println("Всего сохранено товаров: " + counter);
     }
 }

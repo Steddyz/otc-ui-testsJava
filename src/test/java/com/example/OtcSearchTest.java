@@ -18,8 +18,6 @@ import static org.junit.jupiter.api.Assertions.*;
 public class OtcSearchTest {
 
     private static String siteUrl;
-    private static String searchQuery;
-    private static String searchCity;
     private static String searchUrl;
 
     @BeforeAll
@@ -30,9 +28,7 @@ public class OtcSearchTest {
         }
 
         siteUrl = props.getProperty("site.url");
-        searchQuery = props.getProperty("search.query");
-        searchCity = props.getProperty("search.city");
-        searchUrl = props.getProperty("search.url"); // Загружаем search.url
+        searchUrl = props.getProperty("search.url");
 
         Configuration.browser = "edge";
         Configuration.headless = false;
@@ -78,9 +74,8 @@ public class OtcSearchTest {
     @Test
     @Timeout(value = 120, unit = TimeUnit.SECONDS)
     public void searchProductTest() throws IOException {
-        // Используем searchUrl вместо создания MainPage и перехода по ссылке
         MarketplaceSearchPage searchPage = new MarketplaceSearchPage();
-        searchPage.openSearchResults(searchUrl); // Передаём готовую ссылку
+        searchPage.openSearchResults(searchUrl);
         searchPage.saveProductsToFile("storProducts.txt");
 
         System.out.println("Тест успешно завершен!");
