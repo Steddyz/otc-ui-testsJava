@@ -2,7 +2,7 @@ package com.example.pages;
 
 import com.codeborne.selenide.ElementsCollection;
 import com.codeborne.selenide.Selenide;
-import com.codeborne.selenide.WebDriverRunner;
+import com.codeborne.selenide.SelenideElement;
 import com.example.dto.ProductDto;
 import com.example.utils.TestLogger;
 
@@ -30,6 +30,48 @@ public class MarketplaceSearchPage {
         TestLogger.info("Страница загружена");
     }
 
+    public boolean hasSecondPage() {
+        SelenideElement secondPageLink = $("a[href*='page=2'][class*='PaginationBlock-module']");
+        return secondPageLink.exists() && secondPageLink.isDisplayed();
+    }
+
+    public void goToSecondPage() {
+        TestLogger.info("Переход на вторую страницу...");
+
+        SelenideElement secondPageLink = $("a[href*='page=2'][class*='PaginationBlock-module']");
+
+        if (secondPageLink.exists() && secondPageLink.isDisplayed()) {
+            TestLogger.info("Найдена ссылка на вторую страницу");
+            secondPageLink.click();
+            TestLogger.info("Переход на вторую страницу выполнен");
+
+            $$("div[class*='ProductCard-module']").first().shouldBe(visible);
+            Selenide.sleep(1000);
+        } else {
+            TestLogger.warn("Ссылка на вторую страницу не найдена");
+
+            ElementsCollection paginationLinks = $$("a[class*='PaginationBlock-module']")
+                    .filter(visible);
+
+            SelenideElement secondPageByText = null;
+            for (SelenideElement link : paginationLinks) {
+                if ("2".equals(link.getText().trim())) {
+                    secondPageByText = link;
+                    break;
+                }
+            }
+
+            if (secondPageByText != null && secondPageByText.exists()) {
+                secondPageByText.click();
+                TestLogger.info("Переход на вторую страницу выполнен (по тексту)");
+                $$("div[class*='ProductCard-module']").first().shouldBe(visible);
+                Selenide.sleep(1000);
+            } else {
+                TestLogger.warn("Кнопка '2' не найдена");
+            }
+        }
+    }
+
     public List<ProductDto> getProducts() {
         List<ProductDto> products = new ArrayList<>();
 
@@ -37,9 +79,11 @@ public class MarketplaceSearchPage {
             ElementsCollection productCards = $$("div[class*='ProductCard-module']")
                     .filter(visible);
 
-            TestLogger.info("Найдено карточек: {}", productCards.size());
+            TestLogger.info("Найдено карточек на текущей странице: {}", productCards.size());
 
-            for (var card : productCards) {
+            for (int i = 0; i < productCards.size(); i++) {
+                SelenideElement card = $$("div[class*='ProductCard-module']").get(i);
+
                 String name = "";
                 String price = "Цена не указана";
                 String city = "Город не указан";
@@ -92,7 +136,6 @@ public class MarketplaceSearchPage {
                         }
                     }
 
-                    // Ищем город и тип продажи
                     String fullText = card.getText();
                     String[] lines = fullText.split("\n");
 
@@ -124,11 +167,11 @@ public class MarketplaceSearchPage {
                     products.add(new ProductDto(name, price, city, saleType));
 
                 } catch (Exception e) {
-                    TestLogger.warn("Ошибка при парсинге карточки: {}", e.getMessage());
+                    TestLogger.warn("Ошибка при парсинге карточки {}: {}", i, e.getMessage());
                 }
             }
 
-            TestLogger.info("Обработано товаров: {}", products.size());
+            TestLogger.info("Собрано товаров: {}", products.size());
 
         } catch (Exception e) {
             TestLogger.error("Ошибка: {}", e.getMessage());
@@ -137,11 +180,33 @@ public class MarketplaceSearchPage {
         return products;
     }
 
+    public List<ProductDto> getProductsFromAllPages() {
+        List<ProductDto> allProducts = new ArrayList<>();
+
+        TestLogger.info("Сбор товаров с 1-й страницы...");
+        allProducts.addAll(getProducts());
+
+        if (hasSecondPage()) {
+            goToSecondPage();
+
+            TestLogger.info("Сбор товаров со 2-й страницы...");
+            allProducts.addAll(getProducts());
+
+            TestLogger.info("Всего собрано товаров с двух страниц: {}", allProducts.size());
+        } else {
+            TestLogger.info("ℹВторая страница не найдена, собрано только с первой страницы: {}", allProducts.size());
+        }
+
+        return allProducts;
+    }
+
     public void saveProductsToFile(String filename) throws IOException {
-        List<ProductDto> products = getProducts();
+        List<ProductDto> products = getProductsFromAllPages();
+
         List<String> productsInfo = new ArrayList<>();
         productsInfo.add("=== СПИСОК ТОВАРОВ (ПРИНТЕРЫ) ===");
         productsInfo.add("Дата: " + java.time.LocalDateTime.now());
+        productsInfo.add("Всего товаров: " + products.size());
         productsInfo.add("---");
 
         int counter = 0;
