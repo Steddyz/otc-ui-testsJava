@@ -19,37 +19,25 @@ import static com.codeborne.selenide.Selenide.$$;
 
 public class MarketplaceSearchPage {
 
-    private static final TestLogger log = new TestLogger();
-
     public void openSearchResults(String url) {
-        log.info("Открываем: {}", url);
+        TestLogger.info("Открываем: {}", url);
         Selenide.open(url);
 
         $("body").shouldBe(visible);
 
-        try {
-            Thread.sleep(5000);
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            log.warn("Ожидание было прервано: {}", e.getMessage());
-        }
+        $$("div[class*='ProductCard-module']").first().shouldBe(visible);
 
-        log.info("Страница загружена");
+        TestLogger.info("Страница загружена");
     }
 
     public List<ProductDto> getProducts() {
         List<ProductDto> products = new ArrayList<>();
 
         try {
-            try {
-                Thread.sleep(3000);
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-                log.warn("Ожидание было прервано: {}", e.getMessage());
-            }
+            ElementsCollection productCards = $$("div[class*='ProductCard-module']")
+                    .filter(visible);
 
-            ElementsCollection productCards = $$("div[class*='ProductCard-module']");
-            log.info("Найдено карточек: {}", productCards.size());
+            TestLogger.info("Найдено карточек: {}", productCards.size());
 
             for (var card : productCards) {
                 String name = "";
@@ -58,6 +46,7 @@ public class MarketplaceSearchPage {
                 String saleType = "Тип не указан";
 
                 try {
+                    // Ищем название товара
                     var nameLink = card.$("a[href*='/marketplace-b2b/offer/']");
                     if (nameLink.exists()) {
                         name = nameLink.getText().trim();
@@ -88,6 +77,7 @@ public class MarketplaceSearchPage {
                         continue;
                     }
 
+                    // Ищем цену
                     var priceElement = card.$("h3[class*='Title-module']");
                     if (priceElement.exists()) {
                         price = priceElement.getText().trim();
@@ -102,6 +92,7 @@ public class MarketplaceSearchPage {
                         }
                     }
 
+                    // Ищем город и тип продажи
                     String fullText = card.getText();
                     String[] lines = fullText.split("\n");
 
@@ -133,14 +124,14 @@ public class MarketplaceSearchPage {
                     products.add(new ProductDto(name, price, city, saleType));
 
                 } catch (Exception e) {
-                    log.warn("Ошибка при парсинге карточки: {}", e.getMessage());
+                    TestLogger.warn("Ошибка при парсинге карточки: {}", e.getMessage());
                 }
             }
 
-            log.info("Обработано товаров: {}", products.size());
+            TestLogger.info("Обработано товаров: {}", products.size());
 
         } catch (Exception e) {
-            log.error("Ошибка: {}", e.getMessage());
+            TestLogger.error("Ошибка: {}", e.getMessage());
         }
 
         return products;
@@ -170,7 +161,7 @@ public class MarketplaceSearchPage {
         String content = String.join("\n", productsInfo);
         Files.writeString(Paths.get(filename), content, StandardCharsets.UTF_8);
 
-        log.info("Файл сохранен: {}", filename);
-        log.info("Всего сохранено товаров: {}", counter);
+        TestLogger.info("Файл сохранен: {}", filename);
+        TestLogger.info("Всего сохранено товаров: {}", counter);
     }
 }
